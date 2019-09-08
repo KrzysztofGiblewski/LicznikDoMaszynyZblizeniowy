@@ -12,11 +12,12 @@ int coIle = 1;
 int takty = 0;
 int sztuka = 1;
 int wartoscImpulsu = 0;
+int wartoscZblizImp=0;
 int popWartoscImpu  = 0;
 char impuls = 1; //wartosc 0 lub 1 zeby po podaniu ciaglego napiecia nie naliczal kolejnych sztuk
-double napImpulsu = 3.0; //minimalna wartość impulsu w voltach dla impulsu
+double napImpulsu = 4.0; //minimalna wartość impulsu w voltach dla impulsu
 double zeroNapiecia = 0.02; // wartosc napiecia ponirzej ktorego uznajemy za zanik impulsu
-int opuznij = 30; //przerwa miedzy cyklami
+int opuznij = 10; //przerwa miedzy cyklami
 int sygnal = 1; // wyprzedzenie przed iloma workami ma piszcec
 int dlugoscSygnal = 0; //zabezpieczenie przed zatrzymaniem na piszczacym worku
 int wyjdzZMenu = 0;
@@ -34,6 +35,7 @@ void setup() {
   //modul na pinie A4 SDA  dla I2C
   //    i A5 SCL dla I2C
   wartoscImpulsu = analogRead(A6); // pin A6 czyta wartosc napiecia inpulsu
+  wartoscZblizImp=analogRead(A7); //pin A7 z modulu zblizeniowego
   
   
 }
@@ -41,6 +43,7 @@ void setup() {
 void loop() {
 
   wartoscImpulsu = analogRead(A6); //zczytuje impuls z licznika maszyny A6
+  wartoscZblizImp = analogRead(A7); //zczytuje impuls z modulu zblizeniowego A7
   
   delay(opuznij); //daje małe opuźnienie żeby impuls był pojedyńczy
   
@@ -48,16 +51,16 @@ void loop() {
   if (dlugoscSygnal < 50)
     dlugoscSygnal++;
 
-  if (wartoscImpulsu < zeroNapiecia){ //jak napiecie zaniknie to mozna znowu liczyc impuls
+  if (wartoscZblizImp < zeroNapiecia){ //jak napiecie zaniknie to mozna znowu liczyc impuls
     impuls = 1;
-    Serial.println(wartoscImpulsu* (5.0 / 1024.0));
+    Serial.println(wartoscZblizImp* (5.0 / 1024.0));
   }
-  if ((wartoscImpulsu * (5.0 / 1024.0) > napImpulsu) && impuls == 1 ) { //warunek minimalnego napiecia dla impulsu zeby dodac 1 impuls musi byc poprzedni zero
+  if ((wartoscZblizImp * (5.0 / 1024.0) > napImpulsu) && impuls == 1 ) { //warunek minimalnego napiecia dla impulsu zeby dodac 1 impuls musi byc poprzedni zero
     dodaj(sztuka * poIle);
     impuls = 0;
     dlugoscSygnal = 0;
     
-  Serial.println(wartoscImpulsu* (5.0 / 1024.0));
+  Serial.println(wartoscZblizImp* (5.0 / 1024.0));
   
   }
  
@@ -208,12 +211,12 @@ void wyswietl() {
     case 9:                             //ustaw delay miedzy impulsami
       {
         if (digitalRead(A0) == LOW)   {
-          opuznij += 2;
+          opuznij += 1;
           delay(200);
         }
-        if (opuznij > 10)
+        if (opuznij > 1)
           if (digitalRead(A1) == LOW)   {
-            opuznij -= 2;
+            opuznij -= 1;
             delay(200);
           }
         drugaLinia("DELAY ", opuznij, " takt    ", 0);
